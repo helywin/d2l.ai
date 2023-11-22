@@ -58,3 +58,11 @@ def plot(X, Y=None, xlabel=None, ylabel=None, legend=None, xlim=None,
         else:
             axes.plot(y, fmt)
     set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
+
+# @save
+def synthetic_data(w, b, num_examples):  
+    """生成y=Xw+b+噪声"""
+    X = torch.normal(0, 1, (num_examples, len(w)))
+    y = torch.matmul(X, w) + b
+    y += torch.normal(0, 0.01, y.shape)
+    return X, y.reshape((-1, 1))
