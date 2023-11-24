@@ -7,6 +7,8 @@ practice of <https://zh.d2l.ai>
 ```shell
 # 安装torch cuda
 conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+# 安装matplotlib和jupyter
+conda install matplotlib jupyter
 ```
 
 导入导出
