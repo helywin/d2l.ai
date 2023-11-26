@@ -1,5 +1,9 @@
 from matplotlib_inline import backend_inline
 import matplotlib.pyplot as plt
+import torchvision
+import torch
+from torch.utils import data
+from torchvision import transforms
 
 
 def use_svg_display():  # @save
@@ -59,10 +63,66 @@ def plot(X, Y=None, xlabel=None, ylabel=None, legend=None, xlim=None,
             axes.plot(y, fmt)
     set_axes(axes, xlabel, ylabel, xlim, ylim, xscale, yscale, legend)
 
+
 # @save
-def synthetic_data(w, b, num_examples):  
+def synthetic_data(w, b, num_examples):
     """生成y=Xw+b+噪声"""
     X = torch.normal(0, 1, (num_examples, len(w)))
     y = torch.matmul(X, w) + b
     y += torch.normal(0, 0.01, y.shape)
     return X, y.reshape((-1, 1))
+
+
+def sgd(params, lr, batch_size):  # @save
+    """小批量随机梯度下降"""
+    with torch.no_grad():
+        for param in params:
+            param -= lr * param.grad / batch_size
+            param.grad.zero_()
+
+
+def get_dataloader_workers():  # @save
+    """使用4个进程来读取数据"""
+    return 4
+
+
+def load_data_fashion_mnist(batch_size, resize=None):  # @save
+    """下载Fashion-MNIST数据集，然后将其加载到内存中"""
+    trans = [transforms.ToTensor()]
+    if resize:
+        trans.insert(0, transforms.Resize(resize))
+    trans = transforms.Compose(trans)
+    mnist_train = torchvision.datasets.FashionMNIST(
+        root="data", train=True, transform=trans, download=True)
+    mnist_test = torchvision.datasets.FashionMNIST(
+        root="data", train=False, transform=trans, download=True)
+    return (data.DataLoader(mnist_train, batch_size, shuffle=True,
+                            num_workers=get_dataloader_workers()),
+            data.DataLoader(mnist_test, batch_size, shuffle=False,
+                            num_workers=get_dataloader_workers()))
+
+
+def get_fashion_mnist_labels(labels):  # @save
+    """返回Fashion-MNIST数据集的文本标签"""
+    text_labels = ['t-shirt', 'trouser', 'pullover', 'dress', 'coat',
+                   'sandal', 'shirt', 'sneaker', 'bag', 'ankle boot']
+    return [text_labels[int(i)] for i in labels]
+
+
+def show_images(imgs, num_rows, num_cols, titles=None, scale=1.5):  # @save
+    """绘制图像列表"""
+    figsize = (num_cols * scale, num_rows * scale)
+    _, axes = plt.subplots(num_rows, num_cols, figsize=figsize)
+    axes = axes.flatten()
+    for i, (ax, img) in enumerate(zip(axes, imgs)):
+        if torch.is_tensor(img):
+            # 图片张量
+            ax.imshow(img.numpy())
+        else:
+            # PIL图片
+            ax.imshow(img)
+        ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
+        if titles:
+            ax.set_title(titles[i])
+    return axes
